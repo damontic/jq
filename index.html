@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Intro to Linux Kernel Modules</title>
+
+		<meta name="description" content="Introduction to Linux Kernel Modules">
+		<meta name="author" content="David Alberto Montaño Fetecua">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/night.css" id="theme">
+		<link rel="stylesheet" href="css/presentacion.css">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+				<section>
+					<h2><b>Modular Linux Kernel</b></h2>
+					<h3>Link and Unlink Modules at Runtime</h3>
+					<a href="http://www.seven4n.com">
+						<img data-src="./images/S4N.png" >
+					</a>
+					<p>
+						<small>Author:
+							<a href="mailto:davidmontano@seven4n.com">David Montaño</a>
+						</small>
+					</p>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<h1>Agenda</h1>
+						<img data-src="./images/kernel_dissected.jpg" width="40%" height="40%" />
+					</section>
+					<section>
+						<h2>Why should I care? (as a High Level Developper)</h2>
+					</section>
+					<section>
+						<h2>Linux Kernel Quick Review</h2>
+						<ul>
+							<li>History</li>
+							<li>Monolithic</li>
+							<li>Compiled and Statically linked</li>
+							<li>Kernel Threads and User Threads</li>
+							<li>Virtual File System</li>
+							<li>Hardware Dependency</li>
+							<li>Linux Versions</li>
+							<li>Linux Startup Process</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Loadable Kernel Modules</h2>
+						<ul>
+							<li>Kernel Modules</li>
+							<li>Not your daily C / Not libc</li>
+							<li>Where are they?</li>
+							<li>When are they loaded?</li>
+							<li>Linux Kernel Ring</li>
+							<li>List Loaded Modules</li>
+							<li>Which ones is my Hardware using?</li>
+							<li>Get Module Info</li>
+							<li>Load a Module</li>
+							<li>Unload a Module</li>
+							<li>Blacklisting Kernel Modules</li>
+							<li>Tainted Kernel</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Do it Yourself: Compile Your Own Linux Kernel Module</h2>
+						<ul>
+							<li>Hello Kernel Module</li>
+							<li>MP3 Rickroll Kernel Module</li>
+						</ul>
+					</section>
+					<section>
+						<h2>References</h2>
+					</section>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<h3>Why should I care? (as a High Level Developper)</h3>
+						<img src="./images/virtual_box_error.png" onclick="zoom.to({element: this})" width="40%" heigth="40%"></img>
+						<img src="./images/kernel_panic_nf_nat.png" onclick="zoom.to({element: this})" width="40%" heigth="40%"></img>
+					</section>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<h2>Linux Quick Review</h2>
+					</section>
+					<section>
+						<h3>History</h3>
+						<img style="background-color: #cccccc" src="./images/unix_timeline.svg" onclick="zoom.to({element: this})" />
+					</section>
+					<section>
+						<div onclick="zoom.to({element: this})">
+							<h3>Monolithic</h3>
+							<blockquote>
+								<ul>
+									<li>One large and complex Program</li>
+									<li>Several Logical Different Components</li>
+									<li>Many <b>Unix</b> variants are Monolithic *</li>
+								</ul>
+							</blockquote>
+						</div>
+
+						<img src="./images/kernel_types.png" onclick="zoom.to({element: this})"></img>
+
+						<font size="1" onclick="zoom.to({element: this})"><ul>
+							<li>* <b>MAC OS X</b> and <b>GNU Hurd</b> are Microkernels</li>
+							<li><a href="https://commons.wikimedia.org/wiki/File:OS-structure2.svg#/media/File:OS-structure2.svg">OS-structure2</a>" by Golftheman - <a class="external free" href="http://en.wikipedia.org/wiki/Image:OS-structure.svg">http://en.wikipedia.org/wiki/Image:OS-structure.svg</a>. Licensed under Public Domain via <a href="https://commons.wikimedia.org/wiki/">Commons</a></li>
+						</ul>
+						</font>
+					</section>
+					<section>
+						<h3>Compiled and Statically Linked</h3>
+						<ul>
+							<li>
+								Static Kernel Modules
+								<br />
+								<img src="./images/static_modules.jpg" onclick="zoom.to({element: this})"></img>
+							</li>
+							<li>
+								Dynamic Kernel Modules
+								<br />
+								<img src="./images/loadable-km-commands.png" onclick="zoom.to({element: this})" width="50%" heigth="50%"></img>
+							</li>
+						</ul>
+						<br />
+					</section>
+					<section>
+						<h3>Kernel Threads and User Threads</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							<ul>
+								<li>Preemptive Theads</li>
+								<li>Multiprocessor Support</li>
+								<li>Tow types of Threads:</li>
+								<ul>
+									<li><b>Kernel Threads</b></li>
+									<li><b>User Threads:</b> Multithreaded Application Support</li>
+								</ul>
+							</ul>
+						</blockquote>
+					</section>
+					<section>
+						<h3>Virtual Filesystem Switch</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							<ul>
+								<li>Specifies an <b>interface</b> (or a "contract") between the kernel and a concrete file system.</li>
+								<li>It is easy to <b>add support for new file system types to the kernel</b> simply by <b>fulfilling the contract</b>.</li>
+							</ul>
+						</blockquote>
+					</section>
+					<section>
+						<h3>Hardware Dependency</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							<ul>
+								<li><b>Distinction</b> between <b>hardware-dependent</b> and <b>hardware-independent</b> code.</li>
+								<li>These directories include 23 subdirectories that correspond to the different types of hardware platforms supported
+									<ul>
+										<li><b>arch</b></li>
+										<li><b>include</b></li>
+									</ul>
+								</li>
+							</ul>
+						</blockquote>
+					</section>
+					<section>
+						<h3>Linux Versions</h3>
+						<img style="background-color: #cccccc" src="./images/linux_versions.png" onclick="zoom.to({element: this})" />
+					</section>
+					<section>
+						<h3>Linux Versions</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							<ul>
+								<li><b>Linux GRSEC</b></li>
+								<li><b>Linux ZEN</b></li>
+								<li><b>Linux AUFS (advanced multi layered unification filesystem)</b></li>
+								<li><b>Linux Apparmor</b></li>
+								<li>Linux BFS (Brain Fuck Scheduler - created by Con Kolivas for desktop comp<b>uters with fewer than 4096 cores)</b></li>
+								<li>etc...</li>
+							</ul>
+						</blockquote>
+					</section>
+					<section>
+						<h3>Linux Startup Process</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							<ol>
+								<li><b>Bootloader Phase</b></li>
+								<ul>
+									<li><b>BIOS</b>: Master Boot Record code</li>
+									<li><b>UEFI</b>: Linux Kernel Can be executed directly</li>
+								</ul>
+								<li><b>Kernel Loading Phase</b>: loads binary</li>
+								<li><b>Kernel Startup Phase</b>: executes kernel binary</li>
+								<ul>
+									<li>Load Kernel Data Structures</li>
+									<li>Load Kernel Modules</li>
+									<ul>
+										<li><b>initrd:</b> initial RAM Disk</li>
+										<li><b>initramfs:</b> initial RAM File System</li>
+										<li><b>mkinitcpio</b></li>
+									</ul>
+									<li>Starts init process (SysV init|Systemd|Upstart|runit)</li>
+								</ul>
+							</ol>
+						</blockquote>
+					</section>
+					<section>
+						<h3>Example Bootloader Configuration File: grub.cfg</h3>
+						<img src="./images/grub.png" onclick="zoom.to({element: this})"/>
+					</section>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<div onclick="zoom.to({element: this})">
+						<h2>Kernel Modules</h2>
+						<p><blockquote>Modules are <b>pieces of code</b> that can be loaded and unloaded into the kernel
+<b>upon demand</b>. They extend the functionality of the kernel without the need to reboot the system.</q></p>
+
+<p><q>The <b>device driver</b> is <b>one type</b> of module. It allows the kernel to access hardware connected to the system.</blockquote></p>
+						</div>
+					</section>
+
+					<section>
+						<h2>Not your daily C / Not libc</h2>
+						<ul onclick="zoom.to({element: this})">
+							<li>The kernel doesn't use libc.</li>
+							<li>The kernel defines some functions like: <b>printk</b>.</li>
+							<li>So Kernel Modules are limited: e.g. <b>NO FLOATING POINT ARITHMETIC</b></li>
+						</ul>
+						<img src="./images/linus_fp.png" onclick="zoom.to({element: this})" width="35%" heigth="35%"/>
+					</section>
+
+					<section>
+						<h3>Where are they?</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							/usr/lib/modules/kernel_release
+						</blockquote>
+						<img src="./images/ko-list.png" onclick="zoom.to({element: this})" width="35%" heigth="35%"/>
+					</section>
+					<section>
+						<h3>When are they loaded?</h3>
+						<div onclick="zoom.to({element: this})">
+							<blockquote>
+								<ul>
+									<li>During Kernel Startup Phase: mkinitcpio</li>
+										<ul>
+											<li>/etc/modprobe.d/*</li>
+										</ul>
+									<li>During first process initialization: e.g. udev(part of systemd)</li>
+										<ul>
+											<li>coding parallelism to provide a potential performance advantage versus loading these modules serially.</li>
+											<li>does not always load modules in the same order on each boot.</li>
+											<li>/etc/udev/rules.d/*</li>
+										</ul>
+								</ul>
+							</blockquote>
+						</div>
+					</section>
+					<section>
+						<h3>Linux Kernel Ring</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code data-trim>
+	[david@JANUS]$ dmesg -T
+	    					</code></pre>
+							<p><blockquote >Used to write the <b>kernel messages</b> in Linux and other Unix-like operating systems to standard output (which by default is the display screen).</blockquote></p>
+						</div>
+						<img src="./images/dmesg.png" onclick="zoom.to({element: this})" width="75%" height="75%"/>
+					</section>
+					<section>
+						<h3>List Loaded Modules</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code data-trim>
+	[david@JANUS]$ lsmod
+	    					</code></pre>
+							<p><blockquote>Trivial program which nicely formats the contents of the /proc/modules, showing what <b>kernel modules are currently loaded</b>.</blockquote></p>
+						</div>
+						<img src="./images/lsmod.png" onclick="zoom.to({element: this})" width="35%" height="35%"/>
+					</section>
+					<section>
+						<h3>Which ones is my Hardware using?</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code>
+	[david@JANUS:~]$ lspci -k
+							</code></pre>
+							<img src="./images/hardware.png" width="100%" heigth="100%"/>
+						</div>
+					</section>
+					<section>
+						<h3>Get Module Info</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code data-trim>
+	[david@JANUS]$ modinfo &lt;a kernel module&gt;
+	    					</code></pre>
+							<p><blockquote>Lists each <b>attribute</b> of the module in form fieldname : value, for easy reading. The filename is listed the same way (although it's not really an attribute).</b></blockquote></p>
+						</div>
+						<img src="./images/modinfo.png" onclick="zoom.to({element: this})" width="40%" height="40%"/>
+					</section>
+					<section>
+						<h3>Load a Module (Without Dependencies)</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code data-trim>
+	[david@JANUS]$ insmod &lt;a kernel module&gt;
+	    					</code></pre>
+							<p ><blockquote>Trivial program to <b>insert a module into the kernel</b>. Most users will want to use <b>modprobe</b> instead, which is more clever and can handle module dependencies.</b>.</blockquote></p>
+						</div>
+					</section>
+					<section>
+						<h3>Unload a Module</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code data-trim>
+	[david@JANUS]$ rmmod &lt;a kernel module&gt;
+	    					</code></pre>
+							<p><blockquote>Trivial program <b>to remove a module</b> (when module unloading support is provided) from the kernel. Most users will want to use modprobe with the -r option instead.</blockquote></p>
+						</div>
+					</section>
+					<section>
+						<h3>Load/Unload a Module (With Dependencies)</h3>
+						<div onclick="zoom.to({element: this})">
+							<pre><code data-trim>
+	[david@JANUS]$ modprobe [-r] &lt;a kernel module&gt;
+	    					</code></pre>
+							<p><blockquote><b>Intelligently adds or removes a module</b> from the Linux kernel.</b>.</blockquote></p>
+						</div>
+					</section>
+					<section>
+						<h3>Blacklisting Kernel Modules</h3>
+						<div onclick="zoom.to({element: this})">
+							<blockquote>
+<pre><code>
+/etc/modprobe.d/blacklist.conf
+...
+install module_name /bin/false
+...
+</code></pre>
+							</blockquote>
+							<blockquote>
+<pre><code>
+/etc/modprobe.d/&lt;somefile&gt;.conf
+...
+# Do not load the 'pcspkr' module on boot.
+blacklist pcspkr
+...
+</code></pre>
+							</blockquote>
+							<blockquote>
+<pre><code>
+/boot/grub/grub.cfg
+...
+linux   /boot/vmlinuz-linux root=UUID=26f245ba-c23f-4ad7-bba8-a235c89b4e97 rw  rcutree.rcu_idle_gp_delay=1 modprobe.blacklist=modname1,modname2,modname3
+...
+</code></pre>
+							</blockquote>
+						</div>
+					</section>
+					<section>
+						<h3>Tainted Kernel</h3>
+						<blockquote onclick="zoom.to({element: this})">
+							<ul>
+								<li>When the Kernel is in a state that is unsupported by the community</li>
+								<li>The kernel may become tainted for any of several reasons:</li>
+								<ul>
+									<li>Use of a proprietary (or non-GPL compatible) kernel module</li>
+									<li>Staging drivers: part of the kernel source code but not fully tested</li>
+									<li>etc..</li>
+								</ul>
+							</ul>
+						</blockquote>
+					</section>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<h2>Kernel Module Fun</h2>
+					<ul onclick="zoom.to({element: this})">
+						<li><a href="http://jvns.ca/">Julia Evans:</a> Systems Programming, Hacker (Linux, Scala, Python), talks, etc.</li>
+						<li>Github Repository: <a href="https://github.com/jvns/kernel-module-fun">https://github.com/jvns/kernel-module-fun</a></li>
+						<li>Dependencies: Linux Kernel Headers from your current Kernel version</li>
+<pre><code>
+[david@JANUS:~]$ uname -a
+[david@JANUS:~]$ yaourt | apt-get install | yum -i | linux-headers-$(uname -r)
+</code></pre>
+
+					</ul>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<h2>Do It Yourself: Hello Kernel Module</h2>
+					</section>
+					<section>
+						<h3>Makefile</h3>
+						<div onclick="zoom.to({element: this})">
+						<blockquote>
+							<ul>
+								<li>Compiles 5 Kernel Objects.</li>
+								<li>Uses another Makefile in the build directory of the specific Kernel Version</li>
+							</ul>
+						</blockquote>
+<pre><code>
+obj-m += hello.o
+obj-m += hello-packet.o
+obj-m += rootkit.o
+obj-m += rickroll.o
+obj-m += excited_virus.o
+
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+</code></pre>
+						<div>
+					</section>
+					<section>
+						<h3>hello.c</h3>
+						<div onclick="zoom.to({element: this})">
+<pre><code>
+#include &lt;linux/module.h&gt;    // included for all kernel modules
+#include &lt;linux/kernel.h&gt;    // included for KERN_INFO
+#include &lt;linux/init.h&gt;      // included for __init and __exit macros
+
+static int __init hello_init(void)
+{
+    printk(KERN_INFO "Hello, hacker school!!!\n");
+    return 0;    // Non-zero return means that the module couldn't be loaded.
+}
+
+static void __exit hello_cleanup(void)
+{
+  printk(KERN_INFO "I am dead.\n");
+}
+
+module_init(hello_init);
+module_exit(hello_cleanup);
+</code></pre>
+						<div>
+					</section>
+					<section>
+						<h3>Compiling the Kernel Modules</h3>
+						<img src="./images/make.png" onclick="zoom.to({element: this})" />
+					</section>
+					<section>
+						<h3>Loading the hello Kernel Module</h3>
+<div onclick="zoom.to({element: this})">
+	<pre><code>
+	[david@JANUS:~]$ sudo insmod hello.ko
+	[david@JANUS:~]$ sudo rmmod hello.ko
+	</code></pre>
+	<img src="./images/result_hello.png" />
+</div>
+					</section>
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<h2>Do It Yourself: MP3 Rickroll Kernel Module</h2>
+						<p>This Kernel Module changes the mp3 file you open with any program on your system with the one we want to hear. :)</p>
+					</section>
+					<section data-background="./images/rickroll.gif">
+						<h3>Rickroll Steps</h3>
+						<ol>
+							<li>Get your song: rickroll.mp3</li>
+							<li>Change rickroll.c source code (path of your song!!)</li>
+						</ol>
+					</section>
+					<section>
+						<h2>rickroll.c</h2>
+<pre onclick="zoom.to({element: this})"><code>
+#include &lt;linux/module.h&gt;
+#include &lt;linux/kernel.h&gt;
+#include &lt;linux/init.h&gt;
+#include &lt;linux/syscalls.h&gt;
+#include &lt;linux/string.h&gt;
+
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Kamal Marhubi");
+MODULE_DESCRIPTION("Rickroll module");
+
+static char *rickroll_filename = "/home/david/linux/modules/chica/kernel-module-fun/rickroll.mp3";
+
+...
+</code></pre>
+					</section>
+					<section>
+						<h3>Loading the MP3 Rickroll Kernel Module</h3>
+<div onclick="zoom.to({element: this})">
+		<blockquote>Load the module.</blockquote>
+	<pre><code>
+	[david@JANUS:~]$ sudo insmod rickroll.ko
+	</code></pre>
+	<blockquote>Open your favorite music player and listen any MP3 file.<br />Then unload the module.</blockquote>
+	<pre><code>
+	[david@JANUS:~]$ sudo rmmod hello.ko
+	</code></pre>
+</div>
+					</section>
+					<section>
+						<h3>Kernel Module Interface: init and exit functions</h3>
+<div onclick="zoom.to({element: this})">
+
+<pre><code>
+static int __init rickroll_init(void)
+{
+    if(!rickroll_filename) {
+        printk(KERN_ERR "No rick roll filename given.");
+        return -EINVAL;  /* invalid argument */
+    }
+...
+static void __exit rickroll_cleanup(void)
+{
+    printk(KERN_INFO "Ok, now we're gonna give you up. Sorry.\n");
+
+    /* Restore the original sys_open in the table */
+    DISABLE_WRITE_PROTECTION;
+    sys_call_table[__NR_open] = (unsigned long *) original_sys_open;
+    ENABLE_WRITE_PROTECTION;
+}
+...
+module_init(rickroll_init);
+module_exit(rickroll_cleanup);
+</code></pre>
+
+</div>
+					</section>
+
+				</section>
+
+				<section data-background="./images/S4N.png" data-state="img-top-right" data-background-size="250px">
+					<section>
+						<h2>References</h2>
+						<ul>
+							<li><b><u>Understanding the Linux Kernel </u>3rd. Edition (2006)</b>: Daniel P. Bovet, Marco Cesati</li>
+							<li><a href="http://jvns.ca/">Julia Evans:</a> Systems Programming, Hacker (Linux, Scala, Python), talks, etc.</li>
+							<li><a href="https://wiki.archlinux.org/index.php/Kernel_modules">Arch Linux Wiki!!!!</a></li>
+							<li><a href="https://lwn.net/Articles/597351/">Porting Linux to new Hardware</a></li>
+							<li><a href="http://livegrep.com/search/linux">Grep Linux Code!</a></li>
+						</ul>
+					</section>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'convex', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				],
+				    // Parallax background image
+    				parallaxBackgroundImage: './images/this-is-linux.png',
+
+    				// Parallax background size
+    				parallaxBackgroundSize: '2560px 1920px', //2560 x 1920
+			});
+
+		</script>
+
+	</body>
+</html>
