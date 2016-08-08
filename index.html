@@ -81,8 +81,6 @@
 						<h2>Advanced Usage</h2>
 						<ul>
 							<li>Advanced Features</li>
-							<li>Math</li>
-							<li>I/O</li>
 							<li>Streaming</li>
 							<li>Assignement</li>
 							<li>Modules</li>
@@ -138,22 +136,84 @@
 
 					<section>
 						<h3>Basic Filters</h3>
+						<ul>
+							<li>.</li>
+							<li>.foo, .foo.bar</li>
+							<li>.foo?</li>
+							<li>.[string], .[2], .[10:15]</li>
+							<li>.[]</li>
+							<li>,</li>
+							<li>|</li>
+						</ul>
 					</section>
 
 					<section>
 						<h3>Types and Values</h3>
+						<ul>
+							<li>numbers</li>
+							<li>strings</li>
+							<li>booleans</li>
+							<li>arrays</li>
+							<li>objects</li>
+							<li>If you have a filter X that produces four results, then the expression [X] will produce a single result, an array of four elements.</li>
+						</ul>
 					</section>
 
 					<section>
 						<h3>Operators and Functions</h3>
+						<ul>
+							<li>+ - * / %</li>
+							<li>length</li>
+							<li>keys, keys_unsorted</li>
+							<li>has(key)</li>
+							<li>in</li>
+							<li>path(path_expression)</li>
+							<li>del(path_expression)</li>
+							<li>to_entries, from_entries, with_entries</li>
+							<li>select(boolean_expression)</li>
+							<li>arrays, objects, iterables, booleans, numbers, normals, finites, strings, nulls, values, scalars</li>
+							<li>map(x), map_values(x)</li>
+							<li>paths, paths(node_filter)</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3>Operators and Functions</h3>
+						<ul>
+							<li>any, all</li>
+							<li>flatten</li>
+							<li>indices(s)</li>
+							<li>index(s), rindex(s)</li>
+							<li>inside</li>
+							<li>startswith(str), endwith(str)</li>
+							<li>combinations, combinations(n)</li>
+							<li>Dates: now, gmtime, mktime, strptime, ...</li>
+							<li>error(error message)</li>
+							<li>...</li>
+						</ul>
 					</section>
 
 					<section>
 						<h3>Conditionals and Comparisons</h3>
+						<ul>
+							<li>== !=</li>
+							<li>if then else</li>
+							<li> > >= <= < </li>
+							<li>and or not</li>
+							<li>Alternative operator: // </li>
+							<li>try catch</li>
+						</ul>
 					</section>
 
 					<section>
 						<h3>Regular Expressions</h3>
+						<p>Uses the Oniguruma REGEX library</p>
+						<ul>
+							<li>test(val), test(regex; flags)</li>
+							<li>match(val), match(regex; flags)</li>
+							<li>capture(val), capture(regex; flags)</li>
+							<li>...</li>
+						</ul>
 					</section>
 
 				</section>
@@ -162,26 +222,43 @@
 
 					<section>
 						<h3>Advanced Usage</h3>
-					</section>
-
-					<section>
-						<h3>Math</h3>
-					</section>
-
-					<section>
-						<h3>I/O</h3>
+						<ul>
+							<li>variables</li>
+							<li>function definition</li>
+							<li>reduce</li>
+							<li>limit(n; exp)</li>
+							<li>foreach</li>
+							<li>recursion</li>
+							<li>generators and iteretors</li>
+						</ul>
 					</section>
 
 					<section>
 						<h3>Streaming</h3>
+						<ul>
+							<li>jq --stream ...</li>
+							<li>jq begins to work immediately</li>
+							<li>imply a streamed form</li>
+							<ul>
+								<li>[0,[1]] is [[0],0],[[1,0],1],[[1,0]],[[1]]</li>
+							<ul>
+							<li>functions</li>
+							<ul>
+								<li>truncate_stream(stream_expression)</li>
+								<li>fromstream(stream_expression)</li>
+								<li>tostream</li>
+							<ul>
+						</ul>
 					</section>
 
 					<section>
 						<h3>Assignement</h3>
+						<p>Assignment works a little differently in jq than in most programming languages. jq doesn't distinguish between references to and copies of something - two objects or arrays are either equal or not equal, without any further notion of being "the same object" or "not the same object".</p>
 					</section>
 
 					<section>
 						<h3>Modules</h3>
+						<p>jq has a library/module system. Modules are files whose names end in .jq.</p>
 					</section>
 
 				</section>
